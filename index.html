@@ -106,22 +106,22 @@
   .section-intro{ font-size:14.5px; color:var(--c-grey); max-width:540px; line-height:1.7; margin-bottom:36px; }
 
   /* ---------- qué es / acronym ---------- */
-  .acronym{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:clamp(6px,1.6vw,16px); margin:42px 0 8px; max-width:440px; }
+  .acronym{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:clamp(6px,1.6vw,16px); margin:42px 0 8px; max-width:min(440px,41vw); }
   .acronym .letter{ display:flex; flex-direction:column; align-items:center; gap:6px; text-align:center; min-width:0; }
   .acronym .letter .L{ font-family:'Source Serif 4',serif; font-size:clamp(24px,6.4vw,44px); color:var(--c-gold); line-height:1; }
   .acronym .letter .W{ font-size:clamp(7.5px,1.9vw,11.5px); letter-spacing:.02em; text-transform:uppercase; color:var(--c-grey); white-space:nowrap; }
-  @media (max-width:560px){ .acronym{ max-width:100%; gap:clamp(4px,1.4vw,10px); } }
+  @media (max-width:640px){ .acronym{ max-width:100%; gap:clamp(4px,1.4vw,10px); } }
   .two-col{ display:grid; grid-template-columns:1fr 1fr; gap:64px; }
   .two-col p{ font-size:14.5px; color:var(--c-grey); line-height:1.75; max-width:480px; }
   .two-col p + p{ margin-top:16px; }
-  @media (max-width:820px){ .two-col{ grid-template-columns:1fr; } }
+  @media (max-width:640px){ .two-col{ grid-template-columns:1fr; } }
 
   /* ---------- quienes somos ---------- */
   .quienes .grid{ display:grid; grid-template-columns:.85fr 1.15fr; gap:64px; align-items:start; }
   .quienes .ph{ height:380px; }
   .quienes .handles{ display:flex; gap:18px; margin-top:22px; font-size:13px; }
   .quienes .handles a{ color:var(--c-brown); border-bottom:1px solid var(--c-gold); padding-bottom:3px; }
-  @media (max-width:820px){ .quienes .grid{ grid-template-columns:1fr; } }
+  @media (max-width:640px){ .quienes .grid{ grid-template-columns:1fr; } }
   .photo-frame{ position:relative; aspect-ratio:864/1184; height:auto; overflow:hidden; background:#EAE5DC; border:1px solid var(--c-line); }
   .photo-frame img.portrait{ width:100%; height:100%; object-fit:cover; object-position:center center; display:block; }
   .photo-frame .logo-overlay{ position:absolute; top:22px; left:22px; width:84px; opacity:.92; }
@@ -134,7 +134,7 @@
   .mv{ display:grid; grid-template-columns:1fr 1fr; gap:64px; }
   .mv .block h3{ font-family:'Source Serif 4',serif; font-size:20px; color:var(--c-brown); margin-bottom:14px; }
   .mv .block p{ font-size:14.5px; color:var(--c-grey); line-height:1.75; }
-  @media (max-width:820px){ .mv{ grid-template-columns:1fr; gap:36px; } }
+  @media (max-width:640px){ .mv{ grid-template-columns:1fr; gap:36px; } }
 
   /* ---------- método 4 pilares ---------- */
   .method-tagline{ font-family:'Source Serif 4',serif; font-style:italic; font-size:18px; color:var(--c-brown); margin-bottom:48px; }
@@ -290,6 +290,10 @@
   .mobile-menu .mm-cta{ color:var(--c-gold); font-weight:600; text-transform:uppercase; letter-spacing:.05em; font-size:13px; border-bottom:none; }
   section[id]{ scroll-margin-top:76px; }
   @media (max-width:480px){ header.nav img{ height:30px; } header.nav nav a.nav-portal{ font-size:9.5px; letter-spacing:.08em; padding:5px 9px; } header.nav nav a.nav-portal:first-child{ margin-left:6px; } }
+
+  /* --- ajustes responsivos tablet/alineacion --- */
+  @media (max-width:900px){ .two-col{ gap:36px; } .quienes .grid{ gap:36px; } .mv{ gap:36px; } }
+  @media (max-width:640px){ .photo-frame{ max-width:420px; margin:0 auto; } }
 </style>
 </head>
 <body>
