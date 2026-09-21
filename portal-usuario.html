@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal Índice AMUA</title>
+<style>
+  :root{
+    --gold:#8A6D2F; --sepia:#704214; --sage:#9CAF88; --cream:#F7F3EA; --ink:#3A3128;
+    --verde:#6E8B5E; --amarillo:#C99E3C; --naranjo:#BC6C3C; --rojo:#A94438;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:Georgia,'Times New Roman',serif;background:var(--cream);color:var(--ink)}
+
+  /* ---------- LOGIN (oculto por defecto en esta versión) ---------- */
+  #login{display:none;position:fixed;inset:0;z-index:100;align-items:center;justify-content:center;
+    background:linear-gradient(160deg,#F7F3EA 0%,#EFE6D3 60%,#E4D5B8 100%)}
+  #login.show{display:flex}
+  .login-card{background:#fff;padding:52px 44px;border-radius:4px;box-shadow:0 8px 40px rgba(112,66,20,.15);
+    width:min(400px,90vw);text-align:center;border-top:4px solid var(--gold);position:relative}
+  .brand{font-size:44px;letter-spacing:10px;color:var(--gold);font-weight:bold}
+  .brand-sub{font-size:12px;color:var(--sepia);font-style:italic;letter-spacing:2px;margin:6px 0 32px}
+  .login-card h1{font-size:17px;color:var(--sepia);font-weight:normal;margin-bottom:26px}
+  .login-card input,.login-card select{width:100%;padding:12px 14px;margin-bottom:14px;border:1px solid #D8CBB0;
+    border-radius:3px;font-family:Georgia,serif;font-size:14px;background:#FDFBF7;color:var(--ink)}
+  .btn{display:block;width:100%;padding:13px;background:var(--gold);color:#fff;border:none;border-radius:3px;
+    font-family:Georgia,serif;font-size:15px;letter-spacing:1px;cursor:pointer}
+  .btn:hover{background:var(--sepia)}
+  .login-note{font-size:11px;color:#9A8B72;margin-top:20px;font-style:italic;line-height:1.5}
+  .close-x{position:absolute;top:12px;right:16px;font-size:22px;color:#C3B69C;cursor:pointer;line-height:1}
+  .close-x:hover{color:var(--sepia)}
+
+  /* ---------- APP ---------- */
+  header{background:#fff;border-bottom:3px solid var(--gold);padding:14px 28px;display:flex;align-items:center;
+    justify-content:space-between;flex-wrap:wrap;gap:12px;position:sticky;top:0;z-index:10}
+  .h-brand{font-size:23px;letter-spacing:6px;color:var(--gold);font-weight:bold}
+  .h-brand span{font-size:12px;letter-spacing:1px;color:var(--sepia);font-weight:normal;font-style:italic;margin-left:10px}
+  .h-right{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .h-emp{font-size:14px;color:var(--sepia)}
+  header select{padding:8px 12px;border:1px solid #D8CBB0;border-radius:3px;font-family:Georgia,serif;font-size:13px;background:#FDFBF7}
+  .btn-sm{padding:9px 16px;background:var(--gold);color:#fff;border:none;border-radius:3px;font-family:Georgia,serif;font-size:13px;cursor:pointer}
+  .btn-sm:hover{background:var(--sepia)}
+  .btn-ghost{background:none;color:var(--sepia);border:1px solid #D8CBB0}
+  .btn-ghost:hover{background:var(--cream);color:var(--sepia)}
+  main{max-width:1100px;margin:0 auto;padding:30px 20px 60px}
+
+  .draft{background:#EFE6D3;border-left:4px solid var(--sage);padding:11px 18px;font-size:12.5px;color:var(--sepia);
+    font-style:italic;margin-bottom:24px;border-radius:3px}
+
+  .hero{display:flex;gap:22px;flex-wrap:wrap;margin-bottom:26px}
+  .hero-main{flex:1;min-width:270px;background:#fff;border-radius:4px;padding:30px 34px;box-shadow:0 2px 12px rgba(112,66,20,.08);
+    border-left:5px solid var(--gold)}
+  .hero-label{font-size:12px;letter-spacing:2px;color:var(--sepia);text-transform:uppercase}
+  .hero-num{font-size:70px;color:var(--gold);font-weight:bold;line-height:1.05}
+  .hero-num small{font-size:24px;color:#B7A98C}
+  .chip{display:inline-block;padding:5px 16px;border-radius:20px;color:#fff;font-size:13px;letter-spacing:1px;margin-top:6px}
+  .delta{font-size:14px;margin-top:12px;color:var(--sepia)}
+  .delta b.up{color:var(--verde)} .delta b.down{color:var(--rojo)}
+  .hero-side{flex:1;min-width:270px;background:#fff;border-radius:4px;padding:24px 28px;box-shadow:0 2px 12px rgba(112,66,20,.08)}
+  .hero-side h3{font-size:13px;letter-spacing:2px;color:var(--sepia);text-transform:uppercase;margin-bottom:12px}
+  .meta-row{display:flex;justify-content:space-between;font-size:14px;padding:7px 0;border-bottom:1px dotted #E2D7BF;gap:12px}
+  .meta-row:last-child{border-bottom:none}
+
+  .section-t{font-size:15px;letter-spacing:2px;color:var(--sepia);text-transform:uppercase;margin:32px 0 16px;
+    padding-bottom:8px;border-bottom:2px solid var(--sage)}
+
+  .dims{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+  .dim{background:#fff;border-radius:4px;padding:20px 22px;box-shadow:0 2px 12px rgba(112,66,20,.08)}
+  .dim h4{font-size:16px;color:var(--gold);margin-bottom:2px}
+  .dim .d-sub{font-size:11.5px;color:#9A8B72;font-style:italic;margin-bottom:13px}
+  .d-num{font-size:33px;font-weight:bold}
+  .d-bar{height:8px;background:#EEE6D4;border-radius:4px;margin:12px 0 8px;overflow:hidden}
+  .d-bar div{height:100%;border-radius:4px}
+  .d-foot{display:flex;justify-content:space-between;font-size:12px;color:var(--sepia)}
+
+  .panel{background:#fff;border-radius:4px;padding:24px 26px;box-shadow:0 2px 12px rgba(112,66,20,.08)}
+  .chart-wrap{overflow-x:auto}
+  .legend{font-size:12px;color:var(--sepia);margin-top:10px;font-style:italic}
+
+  table{width:100%;border-collapse:collapse;font-size:14px;min-width:520px}
+  th{background:var(--gold);color:#fff;padding:10px 12px;text-align:left;font-weight:normal;letter-spacing:1px;font-size:12.5px}
+  td{padding:10px 12px;border-bottom:1px solid #EFE7D6}
+  tr:last-child td{border-bottom:none}
+  .z-tag{display:inline-block;padding:2px 10px;border-radius:12px;color:#fff;font-size:11.5px}
+  .mini{display:inline-block;height:7px;border-radius:3px;vertical-align:middle;margin-right:8px}
+  .tbl-scroll{overflow-x:auto}
+
+  .temas{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px}
+  .tema{background:#fff;border-radius:4px;padding:20px 22px;box-shadow:0 2px 12px rgba(112,66,20,.08);border-top:3px solid var(--sage)}
+  .tema h4{font-size:15px;color:var(--sepia);margin-bottom:10px}
+  .tema blockquote{font-size:13.5px;font-style:italic;color:#6B5D48;border-left:3px solid var(--sage);padding-left:12px;line-height:1.5}
+
+  .rec{display:flex;gap:16px;background:#fff;border-radius:4px;padding:18px 22px;box-shadow:0 2px 12px rgba(112,66,20,.08);margin-bottom:14px;align-items:flex-start}
+  .rec-n{min-width:38px;height:38px;border-radius:50%;background:var(--gold);color:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:bold}
+  .rec h4{font-size:15.5px;color:var(--sepia);margin-bottom:5px}
+  .rec p{font-size:13.5px;line-height:1.55;color:#5C5040}
+  .rec .st{display:inline-block;margin-top:8px;padding:3px 12px;border-radius:12px;font-size:11.5px;color:#fff}
+
+  footer{text-align:center;font-size:11.5px;color:#9A8B72;font-style:italic;padding:30px 20px;line-height:1.7}
+
+  @media (max-width:600px){
+    header{padding:12px 16px}
+    .h-brand{font-size:20px;letter-spacing:4px}
+    .h-brand span{display:none}
+    .hero-num{font-size:58px}
+    main{padding:22px 14px 50px}
+  }
+  @media print{ header .btn-sm, header select, .draft{display:none} body{background:#fff} }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;600&family=Work+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"><style>
+.amua-topbar{position:sticky;top:0;z-index:9999;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px clamp(16px,4vw,40px);background:rgba(247,244,238,.96);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-bottom:1px solid #E2DDD2;font-family:'Work Sans',sans-serif;box-shadow:0 2px 14px rgba(59,35,20,.05)}
+.amua-topbar .amua-brand{display:flex;align-items:baseline;gap:10px;text-decoration:none}
+.amua-topbar .amua-word{font-family:'Source Serif 4',Georgia,serif;font-weight:600;font-size:20px;letter-spacing:.14em;color:#3B2314}
+.amua-topbar .amua-sub{font-size:11px;letter-spacing:.05em;color:#6B6560;text-transform:uppercase}
+.amua-topbar nav{display:flex;align-items:center;gap:10px}
+.amua-topbar nav a{font-size:12px;letter-spacing:.04em;text-transform:uppercase;font-weight:600;text-decoration:none;color:#3B2314;padding:7px 13px;border-radius:999px;border:1px solid transparent;transition:all .18s ease;white-space:nowrap}
+.amua-topbar nav a.ghost{color:#6B6560}
+.amua-topbar nav a.ghost:hover{color:#3B2314;transform:translateY(-1px)}
+.amua-topbar nav a.pill{background:rgba(196,154,60,.12);border-color:rgba(196,154,60,.55)}
+.amua-topbar nav a.pill:hover{background:#C49A3C;color:#fff;border-color:#C49A3C;transform:translateY(-1px)}
+.amua-topbar nav a.active{background:#C49A3C;color:#fff;border-color:#C49A3C}
+@media (max-width:640px){.amua-topbar{padding:10px 16px}.amua-topbar .amua-sub{display:none}.amua-topbar nav a.ghost{display:none}}
+</style></head>
+<body>
+<div class="amua-topbar"><a class="amua-brand" href="index.html"><span class="amua-word">AMUA</span><span class="amua-sub">Ecosistema de Bienestar Integral</span></a><nav><a class="ghost" href="index.html">&#8592; Volver al sitio</a><a class="pill" href="portal-empresa.html">Portal Empresa</a><a class="pill active" href="portal-usuario.html">Portal Usuario</a></nav></div>
+
+<!-- LOGIN (se abre solo al pulsar "Ver pantalla de acceso") -->
+<div id="login">
+  <div class="login-card">
+    <span class="close-x" onclick="cerrarLogin()">×</span>
+    <div class="brand">AMUA</div>
+    <div class="brand-sub">Alma · Movimiento · Unidad · Acción</div>
+    <h1>Portal Índice AMUA de Capital Humano</h1>
+    <input type="text" id="usuario" placeholder="Usuario" value="minera.ejemplo">
+    <input type="password" placeholder="Contraseña" value="••••••••">
+    <button class="btn" onclick="cerrarLogin()">Ingresar al portal</button>
+    <p class="login-note">Acceso exclusivo para empresas con contrato de licenciamiento vigente.<br>Versión borrador — datos simulados.</p>
+  </div>
+</div>
+
+<!-- APP -->
+<header>
+  <div class="h-brand">AMUA <span>Portal Índice AMUA</span></div>
+  <div class="h-right">
+    <span class="h-emp">Minera Ejemplo SpA</span>
+    <select id="periodo" onchange="render()"></select>
+    <button class="btn-sm btn-ghost" onclick="verLogin()">Ver pantalla de acceso</button>
+    <button class="btn-sm" onclick="window.print()">Descargar informe</button>
+  </div>
+</header>
+
+<main>
+  <div class="draft">Versión borrador para revisión interna — el portal abre sin clave. La pantalla de acceso está diseñada y puede verse con el botón “Ver pantalla de acceso”; se activará al publicar la versión con datos reales.</div>
+
+  <div class="hero">
+    <div class="hero-main">
+      <div class="hero-label">Índice Global AMUA · <span id="per-label"></span></div>
+      <div class="hero-num"><span id="g-num"></span><small> / 100</small></div>
+      <span class="chip" id="g-zona"></span>
+      <div class="delta" id="g-delta"></div>
+    </div>
+    <div class="hero-side">
+      <h3>Ficha de la medición</h3>
+      <div class="meta-row"><span>Respuestas</span><b id="m-n"></b></div>
+      <div class="meta-row"><span>Dotación</span><b id="m-dot"></b></div>
+      <div class="meta-row"><span>Tasa de respuesta</span><b id="m-tasa"></b></div>
+      <div class="meta-row"><span>Próxima medición</span><b id="m-next"></b></div>
+      <div class="meta-row"><span>Alineación</span><b style="font-size:12px">ISO 45003 · CEAL-SM · NCG 461</b></div>
+    </div>
+  </div>
+
+  <div class="section-t">Las cuatro dimensiones del Método AMUA</div>
+  <div class="dims" id="dims"></div>
+
+  <div class="section-t">Evolución trimestral</div>
+  <div class="panel chart-wrap">
+    <svg id="trend" width="1000" height="260" viewBox="0 0 1000 260" style="min-width:640px"></svg>
+    <div class="legend">Índice Global AMUA por trimestre. La línea punteada marca el umbral de Zona Expansión (75).</div>
+  </div>
+
+  <div class="section-t">Brechas por segmento</div>
+  <div class="panel tbl-scroll" style="margin-bottom:18px">
+    <table id="t-areas"></table>
+  </div>
+  <div class="panel tbl-scroll">
+    <table id="t-turnos"></table>
+    <div class="legend">No se reportan segmentos con menos de 5 respuestas, para resguardar el anonimato.</div>
+  </div>
+
+  <div class="section-t">La voz de los trabajadores</div>
+  <div class="temas" id="temas"></div>
+
+  <div class="section-t">Recomendaciones de intervención</div>
+  <div id="recs"></div>
+
+  <footer>
+    Índice AMUA de Capital Humano — metodología propietaria de AMUA STUDIO SPA, Antofagasta, Chile.<br>
+    Documento confidencial. Programa Diagnóstico → Índice → Intervención · Versión borrador con datos simulados.
+  </footer>
+</main>
+
+<script>
+const DIM_INFO = [
+  ["Regulación","Bienestar y carga psicosocial"],
+  ["Conexión","Vínculo, apoyo y liderazgo"],
+  ["Integración","Claridad y seguridad psicológica"],
+  ["Expansión","Desarrollo y autoliderazgo"]
+];
+
+const DATA = {
+  "Q3 2025": { n:98, dot:160, next:"Enero 2026", global:58.2,
+    dims:[41.2, 73.5, 60.1, 68.0],
+    areas:[["Operaciones Mina",39.5,55.8,45],["Mantenimiento",38.1,53.2,32],["Planta",44.6,60.4,28],["Administración",50.2,64.1,19]],
+    turnos:[["Turno 7x7",37.8,54.1,52],["Turno 4x3",41.5,58.0,27],["Jornada de día",51.0,66.3,19]] },
+  "Q4 2025": { n:112, dot:160, next:"Abril 2026", global:61.5,
+    dims:[45.8, 74.9, 62.3, 69.4],
+    areas:[["Operaciones Mina",43.2,59.1,50],["Mantenimiento",42.0,56.9,36],["Planta",48.1,63.0,30],["Administración",52.6,66.0,20]],
+    turnos:[["Turno 7x7",42.4,57.6,58],["Turno 4x3",45.9,61.2,32],["Jornada de día",53.8,68.1,22]] },
+  "Q1 2026": { n:121, dot:158, next:"Julio 2026", global:63.8,
+    dims:[49.3, 75.6, 64.0, 70.8],
+    areas:[["Operaciones Mina",46.8,61.7,54],["Mantenimiento",45.5,59.8,38],["Planta",51.9,65.4,32],["Administración",54.0,67.2,21]],
+    turnos:[["Turno 7x7",46.1,60.3,63],["Turno 4x3",49.6,63.5,34],["Jornada de día",55.2,69.4,24]] },
+  "Q2 2026": { n:129, dot:158, next:"Octubre 2026", global:67.4,
+    dims:[54.6, 77.2, 66.5, 72.4],
+    areas:[["Operaciones Mina",52.3,65.9,58],["Mantenimiento",50.8,63.4,40],["Planta",56.7,68.8,34],["Administración",57.9,70.1,22]],
+    turnos:[["Turno 7x7",51.7,64.5,67],["Turno 4x3",54.8,67.0,36],["Jornada de día",58.9,71.6,26]] }
+};
+const PERIODOS = Object.keys(DATA);
+
+const TEMAS = [
+  ["Descanso y turnos","“Uno rinde, pero llega al séptimo día sin nada en el estanque. Las charlas de pausa y sueño sí se notan.”"],
+  ["Reconocimiento","“Cuando algo sale mal se sabe altiro; cuando sale bien, silencio. Eso está cambiando con las nuevas jefaturas.”"],
+  ["Familia y distancia","“Lo más difícil no es la pega, es perderse las cosas de la casa. La flexibilidad para los cambios de turno ayudó harto.”"]
+];
+
+const RECS = [
+  ["Sesión Neuro-AMUA para Seguridad Operacional","Intervención directa en turnos rotativos: regulación del sistema nervioso, higiene del sueño en régimen de turno y protocolos de pausa. Dimensión objetivo: Regulación.","En curso","#6E8B5E"],
+  ["Rediseño de descansos y cambios de turno","Trabajo con la gerencia de operaciones sobre los puntos de mayor fricción turno-familia. Fortalece el capítulo social del reporte NCG 461.","En curso","#C99E3C"],
+  ["Jefaturas como referentes de bienestar","Formación de las jefaturas mejor evaluadas en Conexión como red interna permanente de bienestar.","Planificada","#8A6D2F"]
+];
+
+function zona(v){
+  if(v>=75) return ["Expansión","#6E8B5E"];
+  if(v>=60) return ["Atención","#C99E3C"];
+  if(v>=45) return ["Riesgo","#BC6C3C"];
+  return ["Crítica","#A94438"];
+}
+const f1 = v => v.toFixed(1).replace(".",",");
+
+function verLogin(){ document.getElementById("login").classList.add("show"); }
+function cerrarLogin(){ document.getElementById("login").classList.remove("show"); }
+
+const sel = document.getElementById("periodo");
+PERIODOS.forEach(p=>{ const o=document.createElement("option"); o.value=p; o.textContent=p; sel.appendChild(o); });
+sel.value = PERIODOS[PERIODOS.length-1];
+
+function render(){
+  const per = sel.value, d = DATA[per];
+  const idx = PERIODOS.indexOf(per);
+  const prev = idx>0 ? DATA[PERIODOS[idx-1]] : null;
+
+  document.getElementById("per-label").textContent = per;
+  document.getElementById("g-num").textContent = f1(d.global);
+  const [zn,zc] = zona(d.global);
+  const chip = document.getElementById("g-zona");
+  chip.textContent = "Zona " + zn; chip.style.background = zc;
+  const gd = document.getElementById("g-delta");
+  if(prev){
+    const dif = d.global - prev.global;
+    gd.innerHTML = `<b class="${dif>=0?'up':'down'}">${dif>=0?"▲":"▼"} ${f1(Math.abs(dif))} puntos</b> vs. trimestre anterior`;
+  } else gd.innerHTML = "Medición de línea base del programa";
+
+  document.getElementById("m-n").textContent = d.n;
+  document.getElementById("m-dot").textContent = d.dot;
+  document.getElementById("m-tasa").textContent = Math.round(d.n/d.dot*100)+"%";
+  document.getElementById("m-next").textContent = d.next;
+
+  const dims = document.getElementById("dims"); dims.innerHTML="";
+  d.dims.forEach((v,i)=>{
+    const [n2,c2] = zona(v);
+    const dif = prev ? v - prev.dims[i] : null;
+    dims.innerHTML += `<div class="dim">
+      <h4>${DIM_INFO[i][0]}</h4><div class="d-sub">${DIM_INFO[i][1]}</div>
+      <span class="d-num" style="color:${c2}">${f1(v)}</span>
+      <div class="d-bar"><div style="width:${v}%;background:${c2}"></div></div>
+      <div class="d-foot"><span>Zona ${n2}</span><span>${dif===null?"línea base":(dif>=0?"▲ +":"▼ −")+f1(Math.abs(dif))}</span></div>
+    </div>`;
+  });
+
+  drawTrend(idx);
+  segTable("t-areas","Área", d.areas);
+  segTable("t-turnos","Sistema de turno", d.turnos);
+
+  const tt = document.getElementById("temas"); tt.innerHTML="";
+  TEMAS.forEach(([t,q])=>{ tt.innerHTML += `<div class="tema"><h4>${t}</h4><blockquote>${q}</blockquote></div>`; });
+
+  const rr = document.getElementById("recs"); rr.innerHTML="";
+  RECS.forEach((r,i)=>{ rr.innerHTML += `<div class="rec"><div class="rec-n">${i+1}</div>
+    <div><h4>${r[0]}</h4><p>${r[1]}</p><span class="st" style="background:${r[3]}">${r[2]}</span></div></div>`; });
+}
+
+function segTable(id, label, rows){
+  let h = `<tr><th>${label}</th><th>Regulación</th><th>Índice AMUA</th><th>Zona</th><th>N</th></tr>`;
+  rows.forEach(r=>{
+    const [zn,zc] = zona(r[2]);
+    h += `<tr><td><b>${r[0]}</b></td>
+      <td>${f1(r[1])}</td>
+      <td><span class="mini" style="width:${r[2]*1.2}px;background:${zc}"></span><b>${f1(r[2])}</b></td>
+      <td><span class="z-tag" style="background:${zc}">${zn}</span></td>
+      <td>${r[3]}</td></tr>`;
+  });
+  document.getElementById(id).innerHTML = h;
+}
+
+function drawTrend(uptoIdx){
+  const svg = document.getElementById("trend");
+  const vals = PERIODOS.map(p=>DATA[p].global);
+  const W=1000,H=260,pad=50, x0=pad, x1=W-30, y0=H-40, y1=25;
+  const min=40,max=85;
+  const X=i=>x0+(x1-x0)*i/(PERIODOS.length-1);
+  const Y=v=>y0-(y0-y1)*(v-min)/(max-min);
+  let s="";
+  [45,55,65,75].forEach(g=>{ s+=`<line x1="${x0}" y1="${Y(g)}" x2="${x1}" y2="${Y(g)}" stroke="#EAE0CB" stroke-width="1" ${g===75?'stroke-dasharray="6,5" stroke="#9CAF88"':''}/>
+    <text x="${x0-10}" y="${Y(g)+4}" font-size="11" fill="#9A8B72" text-anchor="end" font-family="Georgia">${g}</text>`; });
+  const pts = vals.map((v,i)=>`${X(i)},${Y(v)}`).join(" ");
+  s+=`<polyline points="${pts}" fill="none" stroke="#8A6D2F" stroke-width="3"/>`;
+  vals.forEach((v,i)=>{
+    const cur = i===uptoIdx;
+    s+=`<circle cx="${X(i)}" cy="${Y(v)}" r="${cur?9:6}" fill="${cur?"#704214":"#8A6D2F"}" ${cur?'stroke="#C99E3C" stroke-width="3"':''}/>
+    <text x="${X(i)}" y="${Y(v)-16}" font-size="${cur?15:12}" font-weight="bold" fill="#704214" text-anchor="middle" font-family="Georgia">${f1(v)}</text>
+    <text x="${X(i)}" y="${y0+24}" font-size="12" fill="#9A8B72" text-anchor="middle" font-family="Georgia">${PERIODOS[i]}</text>`;
+  });
+  svg.innerHTML = s;
+}
+
+render();
+</script>
+</body>
+</html>

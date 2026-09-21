@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AMUA — Panel de Gestión del Índice</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root{
+    --indigo:#151F38;
+    --indigo-soft:#22304F;
+    --indigo-soft2:#2B3B60;
+    --copper:#B5651D;
+    --copper-bright:#D97F35;
+    --salt:#F4F1E9;
+    --salt-dim:#E7E2D4;
+    --gold:#D9A441;
+    --teal:#2E7D6E;
+    --teal-bright:#6FC7B4;
+    --red:#C15B4A;
+    --ink:#20211D;
+    --line: rgba(244,241,233,0.14);
+    --sidebar-w: 240px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--indigo);
+    color:var(--salt);
+    font-family:'IBM Plex Sans', sans-serif;
+    line-height:1.5;
+    min-height:100vh;
+  }
+  h1,h2,h3{ font-family:'Fraunces', serif; font-weight:500; letter-spacing:-0.01em;}
+  .mono{ font-family:'IBM Plex Mono', monospace; }
+  a{ color:inherit; }
+  button{ font-family:'IBM Plex Sans', sans-serif; cursor:pointer; }
+
+  /* ---------- Layout ---------- */
+  .app{ display:flex; min-height:100vh; }
+  .sidebar{
+    width:var(--sidebar-w); flex-shrink:0; background:#101828;
+    border-right:1px solid var(--line); padding:26px 0; position:sticky; top:0; height:100vh; overflow-y:auto;
+  }
+  .brand{ padding:0 22px 26px; border-bottom:1px solid var(--line); margin-bottom:18px;}
+  .brand .mark{ font-family:'Fraunces', serif; font-size:24px;}
+  .brand .tag{ font-size:11px; color:var(--gold); letter-spacing:0.08em; text-transform:uppercase; margin-top:4px;}
+  nav.navlist{ display:flex; flex-direction:column; gap:2px; padding:0 12px;}
+  nav.navlist button{
+    display:flex; align-items:center; gap:12px; text-align:left; background:transparent; border:none;
+    color:rgba(244,241,233,0.65); padding:11px 14px; border-radius:6px; font-size:14px; font-weight:500;
+    transition:all .15s ease;
+  }
+  nav.navlist button .ic{ font-size:16px; width:20px; text-align:center;}
+  nav.navlist button:hover{ background:var(--indigo-soft); color:var(--salt);}
+  nav.navlist button.active{ background:var(--copper); color:var(--salt);}
+
+  .main{ flex:1; min-width:0; padding:30px 36px 60px; }
+  .topbar{ display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:28px; flex-wrap:wrap; gap:14px;}
+  .topbar h1{ font-size:26px; }
+  .topbar .sub{ font-size:13px; color:rgba(244,241,233,0.5); margin-top:4px;}
+  .topbar .actions{ display:flex; gap:10px; flex-wrap:wrap; }
+
+  .btn{
+    display:inline-flex; align-items:center; gap:8px; padding:10px 18px; border-radius:4px;
+    font-size:13.5px; letter-spacing:0.01em; border:1px solid transparent; transition:all .2s ease; font-weight:500;
+  }
+  .btn-primary{ background:var(--copper); color:var(--salt); }
+  .btn-primary:hover{ background:var(--copper-bright); }
+  .btn-ghost{ border-color:rgba(244,241,233,0.3); color:var(--salt); background:transparent;}
+  .btn-ghost:hover{ border-color:var(--salt); background:var(--indigo-soft);}
+  .btn-danger{ background:transparent; border-color:rgba(193,91,74,0.5); color:#E38C7C; }
+  .btn-danger:hover{ background:rgba(193,91,74,0.15); }
+  .btn-sm{ padding:6px 12px; font-size:12.5px; }
+
+  /* ---------- Cards / KPIs ---------- */
+  .grid{ display:grid; gap:16px; }
+  .kpi-grid{ grid-template-columns:repeat(auto-fit, minmax(190px,1fr)); margin-bottom:26px; }
+  .card{ background:var(--indigo-soft); border:1px solid var(--line); border-radius:10px; padding:20px 22px; }
+  .kpi .kpi-label{ font-size:11.5px; text-transform:uppercase; letter-spacing:0.08em; color:var(--gold); margin-bottom:10px;}
+  .kpi .kpi-value{ font-family:'IBM Plex Mono', monospace; font-size:30px; }
+  .kpi .kpi-sub{ font-size:12px; color:rgba(244,241,233,0.5); margin-top:6px;}
+
+  .charts-row{ grid-template-columns:1.3fr 1fr; margin-bottom:26px; }
+  .chart-card canvas{ max-height:260px; }
+  .chart-card h3{ font-size:15px; margin-bottom:16px; color:var(--salt); font-weight:500; }
+
+  .panel-title{ font-size:15px; margin-bottom:14px; color:var(--salt); font-weight:500; display:flex; justify-content:space-between; align-items:center;}
+
+  /* ---------- Tables ---------- */
+  .table-wrap{ overflow-x:auto; }
+  table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+  th{ text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--gold); padding:10px 12px; border-bottom:1px solid var(--line); white-space:nowrap;}
+  td{ padding:11px 12px; border-bottom:1px solid var(--line); vertical-align:top; color:rgba(244,241,233,0.9);}
+  tr:hover td{ background:rgba(244,241,233,0.03); }
+  td.actions-col{ white-space:nowrap; }
+  .empty-row td{ text-align:center; color:rgba(244,241,233,0.4); padding:30px 12px; }
+
+  .badge{ display:inline-block; padding:3px 10px; border-radius:20px; font-size:11.5px; font-weight:500; white-space:nowrap; }
+  .badge-nuevo{ background:rgba(217,164,65,0.2); color:var(--gold); }
+  .badge-contactado{ background:rgba(111,199,180,0.18); color:var(--teal-bright); }
+  .badge-propuesta{ background:rgba(217,127,53,0.2); color:var(--copper-bright); }
+  .badge-negociacion{ background:rgba(181,101,29,0.28); color:var(--copper-bright); }
+  .badge-cliente{ background:rgba(46,125,110,0.35); color:var(--teal-bright); }
+  .badge-descartado{ background:rgba(193,91,74,0.2); color:#E38C7C; }
+  .badge-riesgo{ background:rgba(193,91,74,0.22); color:#E38C7C; }
+  .badge-desarrollo{ background:rgba(217,164,65,0.2); color:var(--gold); }
+  .badge-solido{ background:rgba(111,199,180,0.18); color:var(--teal-bright); }
+  .badge-ejemplar{ background:rgba(46,125,110,0.35); color:var(--teal-bright); }
+  .badge-gris{ background:rgba(244,241,233,0.1); color:rgba(244,241,233,0.6); }
+
+  .icon-btn{ background:transparent; border:1px solid var(--line); color:rgba(244,241,233,0.75); border-radius:5px; padding:5px 9px; font-size:12px; margin-right:5px;}
+  .icon-btn:hover{ border-color:var(--copper-bright); color:var(--salt); }
+
+  .toolbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px; }
+  .search-input{ padding:9px 14px; border-radius:5px; background:var(--indigo); border:1px solid var(--line); color:var(--salt); font-size:13.5px; min-width:220px;}
+
+  /* ---------- Modal ---------- */
+  .modal-overlay{ position:fixed; inset:0; background:rgba(10,14,25,0.72); display:none; align-items:center; justify-content:center; z-index:100; padding:20px;}
+  .modal-overlay.show{ display:flex; }
+  .modal{ background:var(--indigo-soft); border:1px solid var(--line); border-radius:12px; width:100%; max-width:600px; max-height:88vh; overflow-y:auto; padding:28px 30px;}
+  .modal h2{ font-size:20px; margin-bottom:20px; }
+  .form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .form-field{ display:flex; flex-direction:column; gap:6px; }
+  .form-field.full{ grid-column:1 / -1; }
+  .form-field label{ font-size:11.5px; text-transform:uppercase; letter-spacing:0.06em; color:var(--gold); }
+  .form-field input, .form-field select, .form-field textarea{
+    padding:10px 12px; background:var(--indigo); border:1px solid var(--line); color:var(--salt);
+    border-radius:5px; font-family:'IBM Plex Sans', sans-serif; font-size:13.5px;
+  }
+  .form-field textarea{ resize:vertical; min-height:64px; }
+  .form-field input:focus, .form-field select:focus, .form-field textarea:focus{ outline:2px solid var(--copper-bright); outline-offset:1px; }
+  .modal-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:22px; }
+  .computed-box{ background:var(--indigo); border:1px dashed var(--line); border-radius:8px; padding:14px 16px; grid-column:1/-1; font-size:13px; color:rgba(244,241,233,0.75); }
+  .computed-box b{ color:var(--gold); }
+
+  /* ---------- Alerts list ---------- */
+  .alert-item{ display:flex; justify-content:space-between; align-items:center; padding:11px 0; border-bottom:1px solid var(--line); font-size:13.5px; gap:10px;}
+  .alert-item:last-child{ border-bottom:none; }
+  .alert-item .a-name{ color:var(--salt); font-weight:500; }
+  .alert-item .a-when{ font-size:12px; color:rgba(244,241,233,0.5); }
+  .dot{ width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:8px; flex-shrink:0;}
+  .dot-red{ background:#E38C7C; } .dot-yellow{ background:var(--gold); } .dot-gray{ background:rgba(244,241,233,0.3);}
+
+  .empty-state{ text-align:center; padding:50px 20px; color:rgba(244,241,233,0.45); }
+  .empty-state .big{ font-size:34px; margin-bottom:10px; }
+
+  .footer-note{ text-align:center; font-size:12px; color:rgba(244,241,233,0.35); margin-top:40px;}
+
+  .settings-block{ margin-bottom:26px; }
+  .settings-block h3{ font-size:15px; margin-bottom:12px; }
+  .settings-row{ display:flex; gap:12px; flex-wrap:wrap; align-items:center;}
+
+  @media (max-width:900px){
+    .sidebar{ display:none; }
+    .main{ padding:20px; }
+    .form-grid{ grid-template-columns:1fr; }
+    .charts-row{ grid-template-columns:1fr; }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;600&family=Work+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"><style>
+.amua-topbar{position:sticky;top:0;z-index:9999;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px clamp(16px,4vw,40px);background:rgba(247,244,238,.96);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-bottom:1px solid #E2DDD2;font-family:'Work Sans',sans-serif;box-shadow:0 2px 14px rgba(59,35,20,.05)}
+.amua-topbar .amua-brand{display:flex;align-items:baseline;gap:10px;text-decoration:none}
+.amua-topbar .amua-word{font-family:'Source Serif 4',Georgia,serif;font-weight:600;font-size:20px;letter-spacing:.14em;color:#3B2314}
+.amua-topbar .amua-sub{font-size:11px;letter-spacing:.05em;color:#6B6560;text-transform:uppercase}
+.amua-topbar nav{display:flex;align-items:center;gap:10px}
+.amua-topbar nav a{font-size:12px;letter-spacing:.04em;text-transform:uppercase;font-weight:600;text-decoration:none;color:#3B2314;padding:7px 13px;border-radius:999px;border:1px solid transparent;transition:all .18s ease;white-space:nowrap}
+.amua-topbar nav a.ghost{color:#6B6560}
+.amua-topbar nav a.ghost:hover{color:#3B2314;transform:translateY(-1px)}
+.amua-topbar nav a.pill{background:rgba(196,154,60,.12);border-color:rgba(196,154,60,.55)}
+.amua-topbar nav a.pill:hover{background:#C49A3C;color:#fff;border-color:#C49A3C;transform:translateY(-1px)}
+.amua-topbar nav a.active{background:#C49A3C;color:#fff;border-color:#C49A3C}
+@media (max-width:640px){.amua-topbar{padding:10px 16px}.amua-topbar .amua-sub{display:none}.amua-topbar nav a.ghost{display:none}}
+</style></head>
+<body>
+<div class="amua-topbar"><a class="amua-brand" href="index.html"><span class="amua-word">AMUA</span><span class="amua-sub">Ecosistema de Bienestar Integral</span></a><nav><a class="ghost" href="index.html">&#8592; Volver al sitio</a><a class="pill active" href="portal-empresa.html">Portal Empresa</a><a class="pill" href="portal-usuario.html">Portal Usuario</a></nav></div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="mark">AMUA</div>
+      <div class="tag">Panel de Gestión</div>
+    </div>
+    <nav class="navlist" id="navlist"></nav>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1 id="pageTitle">Dashboard</h1>
+        <div class="sub" id="pageSub">Resumen general del Índice AMUA</div>
+      </div>
+      <div class="actions" id="topActions"></div>
+    </div>
+    <div id="content"></div>
+    <div class="footer-note">AMUA · Nicole Parra Contreras — Coach y Mentora Integral · Antofagasta, Chile — Panel interno de gestión</div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modalBox"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  /* ============ STORAGE ============ */
+  var MEM = {};
+  var Store = {
+    get: function(key, fallback){
+      try{
+        var raw = localStorage.getItem('amua_crm_' + key);
+        return raw ? JSON.parse(raw) : fallback;
+      }catch(e){
+        return (key in MEM) ? MEM[key] : fallback;
+      }
+    },
+    set: function(key, value){
+      try{
+        localStorage.setItem('amua_crm_' + key, JSON.stringify(value));
+      }catch(e){
+        MEM[key] = value;
+      }
+    }
+  };
+
+  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+  function todayISO(){ return new Date().toISOString().slice(0,10); }
+  function fmtDate(d){
+    if(!d) return '—';
+    var parts = d.split('-');
+    if(parts.length!==3) return d;
+    return parts[2] + '/' + parts[1] + '/' + parts[0];
+  }
+  function fmtMoney(n){
+    n = Number(n)||0;
+    return '$' + n.toLocaleString('es-CL');
+  }
+  function daysBetween(dateStr){
+    var d = new Date(dateStr + 'T00:00:00');
+    var now = new Date(); now.setHours(0,0,0,0);
+    return Math.round((d - now) / 86400000);
+  }
+  function esc(s){
+    return String(s==null?'':s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  /* ============ BANDING LOGIC (igual a Portal_Indice_AMUA.html) ============ */
+  function pct(v){ return Math.round(((v - 1) / 4) * 100); }
+  function bandFor(overallPct){
+    if(overallPct < 40) return {
+      banda:'En riesgo',
+      desc:'El equipo muestra señales claras de tensión frente al ritmo de crecimiento del sector.',
+      rec:'Comenzar con un diagnóstico presencial y un ciclo intensivo de Bienestar Neurosistémico antes de escalar cualquier otro programa.'
+    };
+    if(overallPct < 65) return {
+      banda:'En desarrollo',
+      desc:'Hay bases, pero el equipo aún depende de la voluntad individual más que de procesos sólidos.',
+      rec:'Programa combinado de Gestión del Cambio y Bienestar Neurosistémico, de 3 a 6 meses.'
+    };
+    if(overallPct < 85) return {
+      banda:'Sólido',
+      desc:'Buena capacidad de adaptación. El siguiente salto está en formar a los nuevos liderazgos técnicos.',
+      rec:'Priorizar Habilidades Blandas STEM para los perfiles técnicos que asumen roles de liderazgo.'
+    };
+    return {
+      banda:'Ejemplar',
+      desc:'Organización entre las mejor preparadas de la región para esta etapa de expansión energética.',
+      rec:'Diseñar un programa de mantención anual para sostener este nivel mientras el equipo crece.'
+    };
+  }
+  function weakestPillar(gcPct, bnPct, hbPct){
+    var arr = [
+      {k:'Gestión del Cambio', v:gcPct},
+      {k:'Bienestar Neurosistémico', v:bnPct},
+      {k:'Habilidades Blandas STEM', v:hbPct}
+    ];
+    arr.sort(function(a,b){ return a.v - b.v; });
+    return arr[0].k;
+  }
+  function badgeClassBanda(b){
+    return { 'En riesgo':'badge-riesgo', 'En desarrollo':'badge-desarrollo', 'Sólido':'badge-solido', 'Ejemplar':'badge-ejemplar' }[b] || 'badge-gris';
+  }
+  function badgeClassEtapa(e){
+    return {
+      'Nuevo':'badge-nuevo', 'Contactado':'badge-contactado', 'Propuesta enviada':'badge-propuesta',
+      'En negociación':'badge-negociacion', 'Cliente activo':'badge-cliente', 'Descartado':'badge-descartado'
+    }[e] || 'badge-gris';
+  }
+  function badgeClassProp(e){
+    return {
+      'Borrador':'badge-gris', 'Enviada':'badge-propuesta', 'En negociación':'badge-negociacion',
+      'Aceptada':'badge-cliente', 'Rechazada':'badge-descartado'
+    }[e] || 'badge-gris';
+  }
+
+  /* ============ SCHEMAS ============ */
+  var SECTORES = ['Minería','Energía Solar','Energía Eólica','Hidrógeno Verde','Litio','Transmisión Eléctrica','Otro Energético'];
+  var ORIGENES = ['Formulario web','Referido','Evento / Charla','LinkedIn','Otro'];
+  var ETAPAS = ['Nuevo','Contactado','Propuesta enviada','En negociación','Cliente activo','Descartado'];
+  var TIPOS_ACTIVIDAD = ['Llamada','Email','Reunión','WhatsApp','Otro'];
+  var PROGRAMAS = ['Gestión del Cambio','Bienestar Neurosistémico','Habilidades Blandas STEM','Programa Combinado','Mantención Anual'];
+  var ESTADOS_PROP = ['Borrador','Enviada','En negociación','Aceptada','Rechazada'];
+
+  var SCHEMAS = {
+    empresas: {
+      label:'Empresas / Leads', singular:'Empresa', icon:'🏢',
+      fields:[
+        {key:'nombre', label:'Nombre de la empresa', type:'text', required:true, full:true},
+        {key:'sector', label:'Sector', type:'select', options:SECTORES},
+        {key:'contactoNombre', label:'Nombre de contacto', type:'text'},
+        {key:'contactoCargo', label:'Cargo', type:'text'},
+        {key:'email', label:'Email', type:'email'},
+        {key:'telefono', label:'Teléfono', type:'text'},
+        {key:'origen', label:'Origen', type:'select', options:ORIGENES},
+        {key:'etapa', label:'Etapa comercial', type:'select', options:ETAPAS},
+        {key:'fechaRegistro', label:'Fecha de registro', type:'date'},
+        {key:'notas', label:'Notas', type:'textarea', full:true}
+      ]
+    },
+    diagnosticos: {
+      label:'Diagnósticos', singular:'Diagnóstico', icon:'📊',
+      fields:[
+        {key:'empresaId', label:'Empresa', type:'empresaSelect', required:true, full:true},
+        {key:'fecha', label:'Fecha del diagnóstico', type:'date', required:true},
+        {key:'gcScore', label:'Gestión del Cambio (1–5)', type:'number', min:1, max:5, step:0.1},
+        {key:'bnScore', label:'Bienestar Neurosistémico (1–5)', type:'number', min:1, max:5, step:0.1},
+        {key:'hbScore', label:'Habilidades Blandas STEM (1–5)', type:'number', min:1, max:5, step:0.1},
+        {key:'notas', label:'Notas del diagnóstico', type:'textarea', full:true}
+      ]
+    },
+    actividades: {
+      label:'Seguimiento', singular:'Actividad', icon:'📞',
+      fields:[
+        {key:'empresaId', label:'Empresa', type:'empresaSelect', required:true, full:true},
+        {key:'fecha', label:'Fecha de contacto', type:'date', required:true},
+        {key:'tipo', label:'Tipo', type:'select', options:TIPOS_ACTIVIDAD},
+        {key:'notas', label:'Notas', type:'textarea', full:true},
+        {key:'proximaAccion', label:'Próxima acción', type:'text', full:true},
+        {key:'proximaFecha', label:'Fecha próxima acción', type:'date'}
+      ]
+    },
+    propuestas: {
+      label:'Propuestas', singular:'Propuesta', icon:'📄',
+      fields:[
+        {key:'empresaId', label:'Empresa', type:'empresaSelect', required:true, full:true},
+        {key:'programa', label:'Programa', type:'select', options:PROGRAMAS},
+        {key:'valor', label:'Valor (CLP)', type:'number', min:0, step:1000},
+        {key:'estado', label:'Estado', type:'select', options:ESTADOS_PROP},
+        {key:'fechaEnvio', label:'Fecha de envío', type:'date'},
+        {key:'fechaInicioPrograma', label:'Fecha de inicio programa', type:'date'}
+      ]
+    }
+  };
+
+  /* ============ STATE ============ */
+  var state = {
+    empresas: Store.get('empresas', null),
+    diagnosticos: Store.get('diagnosticos', null),
+    actividades: Store.get('actividades', null),
+    propuestas: Store.get('propuestas', null)
+  };
+
+  function seedIfEmpty(){
+    var isFirstRun = state.empresas === null;
+    if(!isFirstRun) return;
+
+    var e1 = uid(), e2 = uid(), e3 = uid();
+    state.empresas = [
+      {id:e1, nombre:'Minera del Norte', sector:'Minería', contactoNombre:'Javiera Soto', contactoCargo:'Gerenta de Personas', email:'javiera.soto@mineradelnorte.cl', telefono:'+56 9 5555 1234', origen:'Formulario web', etapa:'En negociación', fechaRegistro:todayISO(), notas:'Muy interesados en Bienestar Neurosistémico tras alta rotación en faena.'},
+      {id:e2, nombre:'Proyecto Solar Atacama', sector:'Energía Solar', contactoNombre:'Rodrigo Muñoz', contactoCargo:'Jefe de Operaciones', email:'rmunoz@solaratacama.cl', telefono:'+56 9 5555 5678', origen:'Referido', etapa:'Cliente activo', fechaRegistro:todayISO(), notas:'Ya cursó programa combinado, evaluar mantención anual.'},
+      {id:e3, nombre:'Hidrógeno Verde Ltda.', sector:'Hidrógeno Verde', contactoNombre:'Camila Ríos', contactoCargo:'RRHH', email:'camila.rios@h2verde.cl', telefono:'+56 9 5555 9012', origen:'Evento / Charla', etapa:'Nuevo', fechaRegistro:todayISO(), notas:'Completó el diagnóstico en la charla del sector energético.'}
+    ];
+    state.diagnosticos = [
+      {id:uid(), empresaId:e1, fecha:todayISO(), gcScore:2.5, bnScore:1.8, hbScore:3.0, notas:'Primer diagnóstico, alto desgaste reportado en turnos.'},
+      {id:uid(), empresaId:e2, fecha:todayISO(), gcScore:4.2, bnScore:4.0, hbScore:3.6, notas:'Resultado sólido tras el programa combinado.'},
+      {id:uid(), empresaId:e3, fecha:todayISO(), gcScore:3.0, bnScore:3.2, hbScore:2.6, notas:'Equipo técnico joven, débil en habilidades blandas.'}
+    ];
+    state.actividades = [
+      {id:uid(), empresaId:e1, fecha:todayISO(), tipo:'Reunión', notas:'Presentación de propuesta de Bienestar Neurosistémico.', proximaAccion:'Enviar contrato', proximaFecha:todayISO()},
+      {id:uid(), empresaId:e3, fecha:todayISO(), tipo:'Email', notas:'Envío de resultados del diagnóstico.', proximaAccion:'Llamar para agendar reunión', proximaFecha:todayISO()}
+    ];
+    state.propuestas = [
+      {id:uid(), empresaId:e1, programa:'Bienestar Neurosistémico', valor:3200000, estado:'En negociación', fechaEnvio:todayISO(), fechaInicioPrograma:''},
+      {id:uid(), empresaId:e2, programa:'Mantención Anual', valor:1800000, estado:'Aceptada', fechaEnvio:todayISO(), fechaInicioPrograma:todayISO()}
+    ];
+    persistAll();
+  }
+  function persistAll(){
+    Store.set('empresas', state.empresas);
+    Store.set('diagnosticos', state.diagnosticos);
+    Store.set('actividades', state.actividades);
+    Store.set('propuestas', state.propuestas);
+  }
+  seedIfEmpty();
+  state.empresas = state.empresas || [];
+  state.diagnosticos = state.diagnosticos || [];
+  state.actividades = state.actividades || [];
+  state.propuestas = state.propuestas || [];
+
+  function persist(entity){ Store.set(entity, state[entity]); }
+  function empresaName(id){
+    var e = state.empresas.find(function(x){ return x.id===id; });
+    return e ? e.nombre : '(empresa eliminada)';
+  }
+
+  /* ============ NAV ============ */
+  var TABS = [
+    {key:'dashboard', label:'Dashboard', icon:'📈'},
+    {key:'empresas', label:'Empresas', icon:'🏢'},
+    {key:'diagnosticos', label:'Diagnósticos', icon:'📊'},
+    {key:'actividades', label:'Seguimiento', icon:'📞'},
+    {key:'propuestas', label:'Propuestas', icon:'📄'},
+    {key:'config', label:'Configuración', icon:'⚙️'}
+  ];
+  var currentTab = 'dashboard';
+  var searchTerm = '';
+  var charts = {};
+
+  function renderNav(){
+    var nav = document.getElementById('navlist');
+    nav.innerHTML = TABS.map(function(t){
+      return '<button data-tab="'+t.key+'" class="'+(t.key===currentTab?'active':'')+'"><span class="ic">'+t.icon+'</span>'+t.label+'</button>';
+    }).join('');
+    Array.prototype.forEach.call(nav.querySelectorAll('button'), function(btn){
+      btn.addEventListener('click', function(){
+        currentTab = btn.dataset.tab;
+        searchTerm = '';
+        render();
+      });
+    });
+  }
+
+  /* ============ MODAL ============ */
+  function openModal(html){
+    document.getElementById('modalBox').innerHTML = html;
+    document.getElementById('modalOverlay').classList.add('show');
+  }
+  function closeModal(){
+    document.getElementById('modalOverlay').classList.remove('show');
+    document.getElementById('modalBox').innerHTML = '';
+  }
+  document.getElementById('modalOverlay').addEventListener('click', function(e){
+    if(e.target.id === 'modalOverlay') closeModal();
+  });
+
+  function fieldInputHtml(f, value){
+    value = value==null ? '' : value;
+    if(f.type === 'select'){
+      return '<select id="fld_'+f.key+'">' + f.options.map(function(o){
+        return '<option value="'+esc(o)+'" '+(o===value?'selected':'')+'>'+esc(o)+'</option>';
+      }).join('') + '</select>';
+    }
+    if(f.type === 'empresaSelect'){
+      var opts = state.empresas.map(function(e){
+        return '<option value="'+e.id+'" '+(e.id===value?'selected':'')+'>'+esc(e.nombre)+'</option>';
+      }).join('');
+      if(!state.empresas.length) opts = '<option value="">(crea primero una empresa)</option>';
+      return '<select id="fld_'+f.key+'">' + opts + '</select>';
+    }
+    if(f.type === 'textarea'){
+      return '<textarea id="fld_'+f.key+'">'+esc(value)+'</textarea>';
+    }
+    var extra = '';
+    if(f.type==='number'){
+      if(f.min!=null) extra += ' min="'+f.min+'"';
+      if(f.max!=null) extra += ' max="'+f.max+'"';
+      if(f.step!=null) extra += ' step="'+f.step+'"';
+    }
+    return '<input type="'+f.type+'" id="fld_'+f.key+'" value="'+esc(value)+'"'+extra+'>';
+  }
+
+  function openEntityForm(entityKey, recordId){
+    var schema = SCHEMAS[entityKey];
+    var record = recordId ? state[entityKey].find(function(r){ return r.id===recordId; }) : null;
+    var isEdit = !!record;
+    var data = record || {};
+
+    var fieldsHtml = schema.fields.map(function(f){
+      return '<div class="form-field '+(f.full?'full':'')+'"><label>'+f.label+(f.required?' *':'')+'</label>'+fieldInputHtml(f, data[f.key])+'</div>';
+    }).join('');
+
+    var computedHtml = '';
+    if(entityKey === 'diagnosticos'){
+      computedHtml = '<div class="computed-box" id="diagPreview">El índice general, la banda y la recomendación se calculan automáticamente al guardar.</div>';
+    }
+
+    var html =
+      '<h2>'+(isEdit?'Editar':'Nuevo')+' '+schema.singular+'</h2>'+
+      '<div class="form-grid">'+fieldsHtml+computedHtml+'</div>'+
+      '<div class="modal-actions">'+
+        '<button class="btn btn-ghost" id="btnCancel">Cancelar</button>'+
+        '<button class="btn btn-primary" id="btnSave">Guardar</button>'+
+      '</div>';
+    openModal(html);
+
+    document.getElementById('btnCancel').addEventListener('click', closeModal);
+    document.getElementById('btnSave').addEventListener('click', function(){
+      var newData = {};
+      var missingRequired = false;
+      schema.fields.forEach(function(f){
+        var el = document.getElementById('fld_'+f.key);
+        var val = el.value;
+        if(f.type==='number') val = val==='' ? '' : parseFloat(val);
+        if(f.required && (val===''||val==null)) missingRequired = true;
+        newData[f.key] = val;
+      });
+      if(missingRequired){ alert('Completa los campos obligatorios (*).'); return; }
+
+      if(entityKey === 'diagnosticos'){
+        var gc = parseFloat(newData.gcScore)||1, bn = parseFloat(newData.bnScore)||1, hb = parseFloat(newData.hbScore)||1;
+        var gcPct = pct(gc), bnPct = pct(bn), hbPct = pct(hb);
+        var overallPct = Math.round((gcPct+bnPct+hbPct)/3);
+        var band = bandFor(overallPct);
+        newData.gcPct = gcPct; newData.bnPct = bnPct; newData.hbPct = hbPct;
+        newData.overallPct = overallPct; newData.banda = band.banda; newData.recomendacion = band.rec;
+        newData.pilarDebil = weakestPillar(gcPct,bnPct,hbPct);
+      }
+
+      if(isEdit){
+        var idx = state[entityKey].findIndex(function(r){ return r.id===recordId; });
+        state[entityKey][idx] = Object.assign({}, state[entityKey][idx], newData);
+      } else {
+        newData.id = uid();
+        state[entityKey].unshift(newData);
+      }
+      persist(entityKey);
+      closeModal();
+      render();
+    });
+  }
+
+  function deleteRecord(entityKey, id){
+    if(!confirm('¿Eliminar este registro? Esta acción no se puede deshacer.')) return;
+    state[entityKey] = state[entityKey].filter(function(r){ return r.id!==id; });
+    persist(entityKey);
+    render();
+  }
+
+  /* ============ CSV EXPORT ============ */
+  function exportCSV(entityKey){
+    var schema = SCHEMAS[entityKey];
+    var rows = state[entityKey];
+    var headers = schema.fields.map(function(f){ return f.label; });
+    var lines = [headers.join(',')];
+    rows.forEach(function(r){
+      var line = schema.fields.map(function(f){
+        var v = f.type==='empresaSelect' ? empresaName(r[f.key]) : r[f.key];
+        v = String(v==null?'':v).replace(/"/g,'""');
+        return '"'+v+'"';
+      });
+      lines.push(line.join(','));
+    });
+    var blob = new Blob(["﻿"+lines.join('\n')], {type:'text/csv;charset=utf-8;'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'amua_' + entityKey + '.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  }
+
+  function exportBackup(){
+    var blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'amua_backup_' + todayISO() + '.json';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  }
+  function importBackup(file){
+    var reader = new FileReader();
+    reader.onload = function(e){
+      try{
+        var data = JSON.parse(e.target.result);
+        ['empresas','diagnosticos','actividades','propuestas'].forEach(function(k){
+          if(Array.isArray(data[k])) state[k] = data[k];
+        });
+        persistAll();
+        render();
+        alert('Backup restaurado correctamente.');
+      }catch(err){
+        alert('El archivo no es un backup válido de AMUA.');
+      }
+    };
+    reader.readAsText(file);
+  }
+  function resetAllData(){
+    if(!confirm('Esto borrará todos los datos actuales y cargará datos de ejemplo. ¿Continuar?')) return;
+    state.empresas = null;
+    seedIfEmpty();
+    render();
+  }
+  function wipeAllData(){
+    if(!confirm('Esto borrará TODOS los datos permanentemente (sin datos de ejemplo). ¿Continuar?')) return;
+    state.empresas = []; state.diagnosticos = []; state.actividades = []; state.propuestas = [];
+    persistAll();
+    render();
+  }
+
+  /* ============ GENERIC TABLE RENDER ============ */
+  function renderGenericTable(entityKey, columns, filterFn){
+    var schema = SCHEMAS[entityKey];
+    var rows = state[entityKey].slice();
+    if(filterFn) rows = rows.filter(filterFn);
+    if(searchTerm){
+      var term = searchTerm.toLowerCase();
+      rows = rows.filter(function(r){
+        return JSON.stringify(r).toLowerCase().indexOf(term) > -1 ||
+          (r.empresaId ? empresaName(r.empresaId).toLowerCase().indexOf(term)>-1 : false);
+      });
+    }
+
+    var thead = '<tr>' + columns.map(function(c){ return '<th>'+c.label+'</th>'; }).join('') + '<th>Acciones</th></tr>';
+    var tbody;
+    if(!rows.length){
+      tbody = '<tr class="empty-row"><td colspan="'+(columns.length+1)+'">Sin registros todavía. Usa "Nuevo" para agregar el primero.</td></tr>';
+    } else {
+      tbody = rows.map(function(r){
+        var cells = columns.map(function(c){ return '<td>'+c.render(r)+'</td>'; }).join('');
+        return '<tr>'+cells+
+          '<td class="actions-col">'+
+            '<button class="icon-btn" data-act="edit" data-id="'+r.id+'">Editar</button>'+
+            '<button class="icon-btn" data-act="del" data-id="'+r.id+'">Eliminar</button>'+
+          '</td></tr>';
+      }).join('');
+    }
+
+    var html =
+      '<div class="card">'+
+        '<div class="toolbar">'+
+          '<input type="text" class="search-input" id="searchBox" placeholder="Buscar en '+schema.label.toLowerCase()+'..." value="'+esc(searchTerm)+'">'+
+          '<div style="display:flex;gap:8px;">'+
+            '<button class="btn btn-ghost btn-sm" id="btnExportCsv">Exportar CSV</button>'+
+            '<button class="btn btn-primary btn-sm" id="btnNew">+ Nuevo</button>'+
+          '</div>'+
+        '</div>'+
+        '<div class="table-wrap"><table><thead>'+thead+'</thead><tbody>'+tbody+'</tbody></table></div>'+
+      '</div>';
+
+    document.getElementById('content').innerHTML = html;
+
+    document.getElementById('searchBox').addEventListener('input', function(e){
+      searchTerm = e.target.value;
+      renderGenericTable(entityKey, columns, filterFn);
+    });
+    document.getElementById('btnExportCsv').addEventListener('click', function(){ exportCSV(entityKey); });
+    document.getElementById('btnNew').addEventListener('click', function(){ openEntityForm(entityKey, null); });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-act="edit"]'), function(btn){
+      btn.addEventListener('click', function(){ openEntityForm(entityKey, btn.dataset.id); });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-act="del"]'), function(btn){
+      btn.addEventListener('click', function(){ deleteRecord(entityKey, btn.dataset.id); });
+    });
+  }
+
+  /* ============ PAGE: EMPRESAS ============ */
+  function pageEmpresas(){
+    renderGenericTable('empresas', [
+      {label:'Empresa', render:function(r){ return '<b>'+esc(r.nombre)+'</b><br><span style="color:rgba(244,241,233,.5);font-size:12px;">'+esc(r.sector||'')+'</span>'; }},
+      {label:'Contacto', render:function(r){ return esc(r.contactoNombre||'—')+'<br><span style="color:rgba(244,241,233,.5);font-size:12px;">'+esc(r.contactoCargo||'')+'</span>'; }},
+      {label:'Email / Tel', render:function(r){ return esc(r.email||'—')+'<br><span style="color:rgba(244,241,233,.5);font-size:12px;">'+esc(r.telefono||'')+'</span>'; }},
+      {label:'Origen', render:function(r){ return esc(r.origen||'—'); }},
+      {label:'Etapa', render:function(r){ return '<span class="badge '+badgeClassEtapa(r.etapa)+'">'+esc(r.etapa||'—')+'</span>'; }},
+      {label:'Registro', render:function(r){ return fmtDate(r.fechaRegistro); }}
+    ]);
+  }
+
+  /* ============ PAGE: DIAGNOSTICOS ============ */
+  function pageDiagnosticos(){
+    renderGenericTable('diagnosticos', [
+      {label:'Empresa', render:function(r){ return '<b>'+esc(empresaName(r.empresaId))+'</b>'; }},
+      {label:'Fecha', render:function(r){ return fmtDate(r.fecha); }},
+      {label:'GC / BN / HB', render:function(r){ return (r.gcPct??'—')+'% / '+(r.bnPct??'—')+'% / '+(r.hbPct??'—')+'%'; }},
+      {label:'Índice general', render:function(r){ return '<span class="mono">'+(r.overallPct??'—')+'%</span>'; }},
+      {label:'Banda', render:function(r){ return '<span class="badge '+badgeClassBanda(r.banda)+'">'+esc(r.banda||'—')+'</span>'; }},
+      {label:'Pilar más débil', render:function(r){ return esc(r.pilarDebil||'—'); }}
+    ]);
+  }
+
+  /* ============ PAGE: ACTIVIDADES ============ */
+  function pageActividades(){
+    renderGenericTable('actividades', [
+      {label:'Empresa', render:function(r){ return '<b>'+esc(empresaName(r.empresaId))+'</b>'; }},
+      {label:'Fecha', render:function(r){ return fmtDate(r.fecha); }},
+      {label:'Tipo', render:function(r){ return esc(r.tipo||'—'); }},
+      {label:'Notas', render:function(r){ return esc((r.notas||'').slice(0,80)); }},
+      {label:'Próxima acción', render:function(r){ return esc(r.proximaAccion||'—'); }},
+      {label:'Fecha próxima', render:function(r){
+        if(!r.proximaFecha) return '—';
+        var d = daysBetween(r.proximaFecha);
+        var cls = d < 0 ? 'dot-red' : (d <= 7 ? 'dot-yellow' : 'dot-gray');
+        return '<span class="dot '+cls+'"></span>'+fmtDate(r.proximaFecha);
+      }}
+    ]);
+  }
+
+  /* ============ PAGE: PROPUESTAS ============ */
+  function pagePropuestas(){
+    renderGenericTable('propuestas', [
+      {label:'Empresa', render:function(r){ return '<b>'+esc(empresaName(r.empresaId))+'</b>'; }},
+      {label:'Programa', render:function(r){ return esc(r.programa||'—'); }},
+      {label:'Valor', render:function(r){ return fmtMoney(r.valor); }},
+      {label:'Estado', render:function(r){ return '<span class="badge '+badgeClassProp(r.estado)+'">'+esc(r.estado||'—')+'</span>'; }},
+      {label:'Envío', render:function(r){ return fmtDate(r.fechaEnvio); }},
+      {label:'Inicio programa', render:function(r){ return fmtDate(r.fechaInicioPrograma); }}
+    ]);
+  }
+
+  /* ============ PAGE: DASHBOARD ============ */
+  function destroyCharts(){
+    Object.keys(charts).forEach(function(k){ if(charts[k]) charts[k].destroy(); });
+    charts = {};
+  }
+
+  function pageDashboard(){
+    var totalEmpresas = state.empresas.length;
+    var totalDiag = state.diagnosticos.length;
+    var avgOverall = totalDiag ? Math.round(state.diagnosticos.reduce(function(s,d){ return s+(d.overallPct||0); },0)/totalDiag) : 0;
+
+    var pipelineEstados = ['Enviada','En negociación'];
+    var pipelineValor = state.propuestas.filter(function(p){ return pipelineEstados.indexOf(p.estado)>-1; })
+      .reduce(function(s,p){ return s+(parseFloat(p.valor)||0); },0);
+    var valorCerrado = state.propuestas.filter(function(p){ return p.estado==='Aceptada'; })
+      .reduce(function(s,p){ return s+(parseFloat(p.valor)||0); },0);
+
+    var pendientes = state.actividades.filter(function(a){ return a.proximaFecha; })
+      .slice().sort(function(a,b){ return a.proximaFecha.localeCompare(b.proximaFecha); })
+      .slice(0,6);
+
+    var etapaCounts = {}; ETAPAS.forEach(function(e){ etapaCounts[e]=0; });
+    state.empresas.forEach(function(e){ if(etapaCounts[e.etapa]!=null) etapaCounts[e.etapa]++; });
+
+    var bandaCounts = {'En riesgo':0,'En desarrollo':0,'Sólido':0,'Ejemplar':0};
+    state.diagnosticos.forEach(function(d){ if(bandaCounts[d.banda]!=null) bandaCounts[d.banda]++; });
+
+    var avgGC = totalDiag ? Math.round(state.diagnosticos.reduce(function(s,d){return s+(d.gcPct||0);},0)/totalDiag) : 0;
+    var avgBN = totalDiag ? Math.round(state.diagnosticos.reduce(function(s,d){return s+(d.bnPct||0);},0)/totalDiag) : 0;
+    var avgHB = totalDiag ? Math.round(state.diagnosticos.reduce(function(s,d){return s+(d.hbPct||0);},0)/totalDiag) : 0;
+
+    var html =
+      '<div class="grid kpi-grid">'+
+        kpiCard('Empresas registradas', totalEmpresas, 'Leads + clientes en el pipeline')+
+        kpiCard('Diagnósticos realizados', totalDiag, 'Total histórico')+
+        kpiCard('Índice promedio', avgOverall+'%', 'Promedio del índice general')+
+        kpiCard('Pipeline en curso', fmtMoney(pipelineValor), 'Propuestas enviadas / en negociación')+
+        kpiCard('Cerrado (aceptado)', fmtMoney(valorCerrado), 'Propuestas aceptadas')+
+      '</div>'+
+
+      '<div class="grid charts-row">'+
+        '<div class="card chart-card"><h3>Empresas por etapa comercial</h3><canvas id="chartEtapas"></canvas></div>'+
+        '<div class="card chart-card"><h3>Diagnósticos por banda</h3><canvas id="chartBandas"></canvas></div>'+
+      '</div>'+
+
+      '<div class="grid charts-row">'+
+        '<div class="card chart-card"><h3>Promedio por pilar (todas las empresas)</h3><canvas id="chartPilares"></canvas></div>'+
+        '<div class="card">'+
+          '<div class="panel-title">Próximos seguimientos</div>'+
+          renderPendientesList(pendientes)+
+        '</div>'+
+      '</div>';
+
+    document.getElementById('content').innerHTML = html;
+
+    destroyCharts();
+    if(window.Chart){
+      charts.etapas = new Chart(document.getElementById('chartEtapas'), {
+        type:'bar',
+        data:{ labels:ETAPAS, datasets:[{ label:'Empresas', data:ETAPAS.map(function(e){return etapaCounts[e];}), backgroundColor:'#D97F35', borderRadius:4 }] },
+        options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{ ticks:{ color:'#F4F1E9', font:{size:10} }, grid:{color:'rgba(244,241,233,0.08)'} }, y:{ beginAtZero:true, ticks:{ color:'#F4F1E9', stepSize:1 }, grid:{color:'rgba(244,241,233,0.08)'} } } }
+      });
+      charts.bandas = new Chart(document.getElementById('chartBandas'), {
+        type:'doughnut',
+        data:{ labels:Object.keys(bandaCounts), datasets:[{ data:Object.values(bandaCounts), backgroundColor:['#C15B4A','#D9A441','#6FC7B4','#2E7D6E'] }] },
+        options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{color:'#F4F1E9', font:{size:11}}}} }
+      });
+      charts.pilares = new Chart(document.getElementById('chartPilares'), {
+        type:'bar',
+        data:{ labels:['Gestión del Cambio','Bienestar Neurosistémico','Habilidades Blandas STEM'], datasets:[{ label:'% promedio', data:[avgGC,avgBN,avgHB], backgroundColor:['#D97F35','#6FC7B4','#D9A441'], borderRadius:4 }] },
+        options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{ min:0, max:100, ticks:{ color:'#F4F1E9' }, grid:{color:'rgba(244,241,233,0.08)'} }, y:{ ticks:{ color:'#F4F1E9', font:{size:11} }, grid:{display:false} } } }
+      });
+    }
+  }
+
+  function kpiCard(label, value, sub){
+    return '<div class="card kpi"><div class="kpi-label">'+label+'</div><div class="kpi-value">'+value+'</div><div class="kpi-sub">'+sub+'</div></div>';
+  }
+
+  function renderPendientesList(items){
+    if(!items.length) return '<div class="empty-state"><div class="big">✓</div>Sin seguimientos programados</div>';
+    return items.map(function(a){
+      var d = daysBetween(a.proximaFecha);
+      var cls = d < 0 ? 'dot-red' : (d <= 7 ? 'dot-yellow' : 'dot-gray');
+      var when = d < 0 ? 'Vencido hace '+Math.abs(d)+' día(s)' : (d===0 ? 'Hoy' : 'En '+d+' día(s)');
+      return '<div class="alert-item"><div><span class="dot '+cls+'"></span><span class="a-name">'+esc(empresaName(a.empresaId))+'</span> — '+esc(a.proximaAccion||a.tipo||'')+'</div><div class="a-when">'+when+' · '+fmtDate(a.proximaFecha)+'</div></div>';
+    }).join('');
+  }
+
+  /* ============ PAGE: CONFIG ============ */
+  function pageConfig(){
+    var html =
+      '<div class="card settings-block">'+
+        '<h3>Copia de seguridad</h3>'+
+        '<p style="color:rgba(244,241,233,.6);font-size:13.5px;margin-bottom:14px;">Todos los datos se guardan en este navegador. Exporta un backup periódicamente o para moverlo a otro equipo.</p>'+
+        '<div class="settings-row">'+
+          '<button class="btn btn-primary" id="btnExportBackup">Descargar backup (JSON)</button>'+
+          '<label class="btn btn-ghost" style="cursor:pointer;">Restaurar backup<input type="file" id="fileImport" accept=".json" style="display:none;"></label>'+
+        '</div>'+
+      '</div>'+
+      '<div class="card settings-block">'+
+        '<h3>Datos</h3>'+
+        '<div class="settings-row">'+
+          '<button class="btn btn-ghost" id="btnResetDemo">Restablecer con datos de ejemplo</button>'+
+          '<button class="btn btn-danger" id="btnWipe">Vaciar todos los datos</button>'+
+        '</div>'+
+      '</div>'+
+      '<div class="card settings-block">'+
+        '<h3>Acerca de este panel</h3>'+
+        '<p style="color:rgba(244,241,233,.6);font-size:13.5px;">Panel de gestión interno para el Índice AMUA (portal público de diagnóstico). Aquí se registran las empresas que completan el diagnóstico, sus puntajes por pilar, el seguimiento comercial y las propuestas de programas (Gestión del Cambio, Bienestar Neurosistémico, Habilidades Blandas STEM).</p>'+
+      '</div>';
+    document.getElementById('content').innerHTML = html;
+
+    document.getElementById('btnExportBackup').addEventListener('click', exportBackup);
+    document.getElementById('fileImport').addEventListener('change', function(e){
+      if(e.target.files[0]) importBackup(e.target.files[0]);
+    });
+    document.getElementById('btnResetDemo').addEventListener('click', resetAllData);
+    document.getElementById('btnWipe').addEventListener('click', wipeAllData);
+  }
+
+  /* ============ ROUTER ============ */
+  var PAGE_META = {
+    dashboard: {title:'Dashboard', sub:'Resumen general del Índice AMUA'},
+    empresas: {title:'Empresas / Leads', sub:'Empresas que han pasado por el diagnóstico o el embudo comercial'},
+    diagnosticos: {title:'Diagnósticos', sub:'Resultados del Índice AMUA por empresa'},
+    actividades: {title:'Seguimiento', sub:'Historial de contacto y próximas acciones'},
+    propuestas: {title:'Propuestas', sub:'Programas propuestos y su estado comercial'},
+    config: {title:'Configuración', sub:'Backup, restauración y datos del panel'}
+  };
+
+  function render(){
+    renderNav();
+    var meta = PAGE_META[currentTab];
+    document.getElementById('pageTitle').textContent = meta.title;
+    document.getElementById('pageSub').textContent = meta.sub;
+    document.getElementById('topActions').innerHTML = '';
+
+    if(currentTab==='dashboard') pageDashboard();
+    else if(currentTab==='empresas') pageEmpresas();
+    else if(currentTab==='diagnosticos') pageDiagnosticos();
+    else if(currentTab==='actividades') pageActividades();
+    else if(currentTab==='propuestas') pagePropuestas();
+    else if(currentTab==='config') pageConfig();
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
